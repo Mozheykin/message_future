@@ -1,0 +1,27 @@
+#!/usr/bin/env python3.10
+from enum import Enum
+from send_message import SendMessage, SendMessageEmail
+from aiogram import Bot, Dispatcher, executor, types
+from config import Api_Token
+
+
+bot = Bot(token=Api_Token)
+dp = Dispatcher(bot)
+
+
+class SendMethod(Enum):
+    Email: SendMessageEmail
+
+
+@dp.message_handler(commands=['start', 'help'])
+async def send_welcome(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    await message.reply("Send a message to the future")
+
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
+
+
