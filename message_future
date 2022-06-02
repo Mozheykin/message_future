@@ -1,24 +1,64 @@
 #!/usr/bin/env python3.10
+from datetime import datetime
+from email.message import Message
 from enum import Enum
-from send_message import SendMessage, SendMessageEmail
+from posixpath import split
+from send_message import Messages, SendMessage, SendMessageEmail
 from aiogram import Bot, Dispatcher, executor, types
 from config import Api_Token
+from put_message import put_message
+import logging
+import re
+from exceptions import NotTypeMessage
 
 
 bot = Bot(token=Api_Token)
 dp = Dispatcher(bot)
+logging.basicConfig(level=logging.INFO)
 
+
+Message_Method = {
+    ':add message': put_message
+}
+
+
+Keyboards = {
+    'Start': ["Создать сообщение", "Обновить таймер сообщения", "Удалить сообщение"],
+    'Create_message': ['Создать', 'Отмена'],
+}
 
 class SendMethod(Enum):
     Email: SendMessageEmail
 
+def Keyboard(command: str) -> types.ReplyKeyboardMarkup:
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*Keyboards[command])
+    return keyboard
+
 
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
-    """
-    This handler will be called when user sends `/start` or `/help` command
-    """
-    await message.reply("Send a message to the future")
+    await message.answer("Send a message to the future", reply_markup=Keyboard('Start'))
+
+
+@dp.message_handler()
+async def parse_commands(message: types.Message):
+    if message.text == 'Создать сообщение':
+        await message.answer('Введите сообщение [Титул:::Сообщение:::Кому:::Через сколько дней]', 
+            reply_markup=Keyboard('Create_message'))
+    elif message.text == 'Отмена':
+        await message.answer('Send a message to the future', reply_markup=Keyboard('Start'))
+    elif message.text == 'Создать':
+        await message.answer('Сообщение создано')
+        await message.answer('Send a message to the future', reply_markup=Keyboard('Start'))
+    else:
+        message_out = message.text.split(':::')
+        if not len(message_out) == 4:
+            assert NotTypeMessage
+        message_out = Messages(id_=message.chat.id, from_=message_out[3], title=message_out[0], 
+            message_=message_out[1], when_send=datetime.now)
+        await message.answer(message_out)
+    
 
 
 if __name__ == '__main__':

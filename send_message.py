@@ -1,10 +1,13 @@
-from email import message
 from typing import NamedTuple
+from datetime import datetime
+
 
 class Messages(NamedTuple):
+    id_: int
     from_: str
-    message: str
-
+    title: str
+    message_: str
+    when_send: datetime
 
 
 class SendMessage:
